@@ -8,8 +8,7 @@ use OpenConext\Component\EngineBlockMetadata\Entity\IdentityProvider;
  */
 class EngineBlock_UserDirectory
 {
-    const URN_COLLAB_PERSON_NAMESPACE               = 'urn:collab:person';
-    const URN_IS_MEMBER_OF                          = 'urn:mace:dir:attribute-def:isMemberOf';
+
 
     const LDAP_CLASS_COLLAB_PERSON                  = 'collabPerson';
 
@@ -242,41 +241,9 @@ class EngineBlock_UserDirectory
         return $newAttributes;
     }
 
-    protected function _getCollabPersonId($attributes)
-    {
-        $uid = str_replace('@', '_', $attributes['uid']);
-        return self::URN_COLLAB_PERSON_NAMESPACE . ':' . $attributes['o'] . ':' . $uid;
-    }
-
-    protected function _getCollabPersonUuid($attributes)
+    private function getCollabPersonUuid()
     {
         return (string)Surfnet_Zend_Uuid::generate();
-    }
-
-    protected function _getCollabPersonHash($attributes)
-    {
-        return md5($this->_getCollabPersonString($attributes));
-    }
-
-    protected function _getCollabPersonString($attributes)
-    {
-        $pairs = array();
-        foreach ($attributes as $name => $value) {
-            $pairs[] = "$name=$value";
-        }
-        return implode('&', $pairs);
-    }
-
-    /**
-     * Figure out of a person with given attributes is a guest user.
-     *
-     * @param array $saml2attributes
-     * @return bool
-     */
-    protected function _getCollabPersonIsGuest(array $saml2attributes)
-    {
-        $guestQualifier = EngineBlock_ApplicationSingleton::getInstance()->getConfiguration()->addgueststatus->guestqualifier;
-        return !isset($saml2attributes[self::URN_IS_MEMBER_OF]) || !in_array($guestQualifier, $saml2attributes[self::URN_IS_MEMBER_OF]);
     }
 
     protected function _getDnForLdapAttributes($attributes)

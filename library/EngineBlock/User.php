@@ -2,141 +2,76 @@
 
 class EngineBlock_User
 {
-    private $_attributes = array();
+    /**
+     * @var EngineBlock_User_InetOrgPerson
+     */
+    private $inetOrgPerson;
 
-    public function __construct(array $attributes)
+    /**
+     * @var EngineBlock_User_EduPerson
+     */
+    private $eduPerson;
+
+    /**
+     * @var EngineBlock_User_NlEduPerson
+     */
+    private $nlEduPerson;
+
+    /**
+     * @var EngineBlock_User_CollabPerson
+     */
+    private $collabPerson;
+
+    /**
+     * @param EngineBlock_User_InetOrgPerson $inetOrgPerson
+     * @param EngineBlock_User_EduPerson     $eduPerson
+     * @param EngineBlock_User_NlEduPerson   $nlEduPerson
+     * @param EngineBlock_User_CollabPerson  $collabPerson
+     */
+    public function __construct(
+        EngineBlock_User_InetOrgPerson  $inetOrgPerson,
+        EngineBlock_User_EduPerson      $eduPerson,
+        EngineBlock_User_NlEduPerson    $nlEduPerson,
+        EngineBlock_User_CollabPerson   $collabPerson
+    ) {
+        $this->inetOrgPerson = $inetOrgPerson;
+        $this->eduPerson     = $eduPerson;
+        $this->nlEduPerson   = $nlEduPerson;
+        $this->collabPerson  = $collabPerson;
+    }
+
+    public function getCollabPersonUuid()
     {
-        $this->_attributes = $attributes;
+        return $this->collabPerson->collabPersonUuid;
     }
 
     public function getUid()
     {
-        return $this->_attributes['nameid'][0];
+        return $this->inetOrgPerson->uid;
     }
 
-    public function getDisplayName()
+    public function getOrganization()
     {
-        return $this->_attributes['urn:mace:dir:attribute-def:displayName'][0];
+        return $this->inetOrgPerson->o;
     }
 
-    public function getAttributes()
+    public function toArray()
     {
-        return $this->_attributes; 
-    }
-
-    public function deleteConsent($spId)
-    {
-        $pdo = $this->_getDatabaseConnection();
-
-        $query = "DELETE FROM consent
-                    WHERE hashed_user_id = ? AND service_id = ?";
-        $parameters = array(sha1($this->getUid()), $spId);
-        $statement = $pdo->prepare($query);
-        $statement->execute($parameters);
-    }
-
-    public function getConsent()
-    {
-        $pdo = $this->_getDatabaseConnection();
-        $query = 'SELECT service_id FROM consent
-                    WHERE hashed_user_id = ?';
-        $parameters = array(
-            sha1($this->getUid())
-        );
-        $statement = $pdo->prepare($query);
-        $statement->execute($parameters);
-        $resultSet = $statement->fetchAll();
-
         $result = array();
-        foreach($resultSet as $value) {
-            $result[] = $value['service_id'];
-        }
-
+        $result = array_merge($result, get_object_vars($this->inetOrgPerson));
+        $result = array_merge($result, get_object_vars($this->eduPerson));
+        $result = array_merge($result, get_object_vars($this->nlEduPerson));
+        $result = array_merge($result, get_object_vars($this->collabPerson));
         return $result;
     }
 
-    /**
-     * Completely remove a user from the SURFconext platform.
-     *
-     * @return void
-     */
-    public function delete()
+    public function toArray()
     {
-        $this->_deleteLdapUser();
-
-        $this->_deleteUserConsent();
-
-        $this->_deleteOauthTokens();
-
-        // Delete the cookies and session
-        $this->_deleteFromEnvironment();
-    }
-
-    /**
-     * Delete the user from the SURFconext LDAP.
-     *
-     * @return void
-     */
-    protected function _deleteLdapUser()
-    {
-        $ldapConfig = EngineBlock_ApplicationSingleton::getInstance()
-                                                      ->getConfiguration()
-                                                      ->ldap;
-
-        $userDirectory = new EngineBlock_UserDirectory($ldapConfig);
-        $userDirectory->deleteUser($this->getUid());
-    }
-
-    /**
-     * Delete the user consent form the database
-     *
-     * @return void
-     */
-    protected function _deleteUserConsent()
-    {
-        $pdo = $this->_getDatabaseConnection();
-
-        $query = "DELETE FROM consent
-                    WHERE hashed_user_id = ?";
-        $parameters = array(
-            sha1($this->getUid())
-        );
-
-        $statement = $pdo->prepare($query);
-        $statement->execute($parameters);
-    }
-
-    protected function _deleteOauthTokens()
-    {
-        $pdo = $this->_getDatabaseConnection();
-
-        $query = "DELETE FROM group_provider_user_oauth
-                    WHERE user_id = ?";
-        $parameters = array(
-            $this->getUid()
-        );
-
-        $statement = $pdo->prepare($query);
-        $statement->execute($parameters);
-    }
-
-    /**
-     * @return PDO
-     */
-    protected function _getDatabaseConnection()
-    {
-        $pdo = new EngineBlock_Database_ConnectionFactory();
-        return $pdo->create(EngineBlock_Database_ConnectionFactory::MODE_WRITE);
-    }
-
-    /**
-     * Delete the cookies and environment
-     *
-     * @return void
-     */
-    protected function _deleteFromEnvironment()
-    {
-        $_COOKIE = array();
-        $_SESSION = array();
+        $result = array();
+        $result = array_merge($result, get_object_vars($this->inetOrgPerson));
+        $result = array_merge($result, get_object_vars($this->eduPerson));
+        $result = array_merge($result, get_object_vars($this->nlEduPerson));
+        $result = array_merge($result, get_object_vars($this->collabPerson));
+        return $result;
     }
 }
